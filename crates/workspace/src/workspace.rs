@@ -7122,7 +7122,8 @@ impl Render for Workspace {
                                 }))
                                 .children(self.render_notifications(window, cx)),
                         )
-                        .when(self.status_bar_visible(cx), |parent| {
+                        // TODO: Status bar temporarily hidden while migrating items to EditorPaneStatus
+                        .when(false && self.status_bar_visible(cx), |parent| {
                             parent.child(self.status_bar.clone())
                         })
                         .child(self.modal_layer.clone())
