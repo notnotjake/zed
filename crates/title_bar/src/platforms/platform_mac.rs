@@ -2,5 +2,6 @@
 /// lights are a static size, and don't scale with the rest of the UI.
 ///
 /// Magic number: There is one extra pixel of padding on the left side due to
-/// the 1px border around the window on macOS apps.
-pub const TRAFFIC_LIGHT_PADDING: f32 = 71.;
+/// the 1px border around the window on macOS apps. The additional padding
+/// beyond the traffic lights provides visual breathing room for the title text.
+pub const TRAFFIC_LIGHT_PADDING: f32 = 80.;
