@@ -1,5 +1,5 @@
 use crate::{
-    CloseWindow, NewFile, NewTerminal, OpenInTerminal, OpenOptions, OpenTerminal, OpenVisible,
+    CloseWindow, NewFile, NewTerminal, OpenInNewWindow, OpenInTerminal, OpenOptions, OpenTerminal, OpenVisible,
     SplitDirection, ToggleFileFinder, ToggleProjectSymbols, ToggleZoom, Workspace,
     WorkspaceItemBuilder,
     invalid_item_view::InvalidItemView,
@@ -2950,6 +2950,7 @@ impl Pane {
                             });
 
                             let entry_abs_path = pane.read(cx).entry_abs_path(entry, cx);
+                            let has_file_path = entry_abs_path.is_some();
                             let parent_abs_path = entry_abs_path
                                 .as_deref()
                                 .and_then(|abs_path| Some(abs_path.parent()?.to_path_buf()));
@@ -3017,6 +3018,18 @@ impl Pane {
                                                     working_directory: parent_abs_path.clone(),
                                                 }
                                                 .boxed_clone(),
+                                                cx,
+                                            );
+                                        }),
+                                    )
+                                })
+                                .when(has_file_path, |menu| {
+                                    menu.entry(
+                                        "Open in New Window",
+                                        Some(Box::new(OpenInNewWindow)),
+                                        window.handler_for(&pane, move |_, window, cx| {
+                                            window.dispatch_action(
+                                                OpenInNewWindow.boxed_clone(),
                                                 cx,
                                             );
                                         }),
