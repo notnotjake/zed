@@ -19,7 +19,7 @@
 
 ## Priority Order
 1. ~~New window cascade~~ **DONE** - PR submitted
-2. ~~Vim mode indicator~~ **DONE** - Ready for PR
+2. ~~Vim mode indicator~~ **DONE** - PR submitted
 3. Sidebar buttons to toolbar
 4. Per-pane status bar
 5. Everything else
@@ -36,18 +36,21 @@
 | 2c Menu bar layout | Low | Just reorganize `zed/src/zed/app_menus.rs` |
 | 3a Sidebar to toolbar | Medium | Move `PanelButtons` from status bar to title bar in `workspace.rs` |
 | 3b Per-pane file info | Medium-High | New component, wire up data sources per-editor |
-| 3c Vim mode indicator | Low | **DONE** - Friendly labels in `vim/src/mode_indicator.rs` and `state.rs` |
+| 3c Vim mode indicator | Low | **DONE** - PR submitted. Friendly labels via `friendly_mode_display` setting |
 
 ## Completed Changes
 
-### Vim Mode Indicator (3c)
+### Vim Mode Indicator (3c) - PR #44470
 Files changed:
 - `crates/vim/src/mode_indicator.rs` - Friendly mode names, improved operator display
 - `crates/vim/src/state.rs` - Added `friendly_status()` method to `Operator`
+- `crates/vim/src/vim.rs` - Added `friendly_mode_display` to `VimSettings`
+- `crates/settings/src/settings_content.rs` - Setting definition
+- `assets/settings/default.json` - Default value (false)
+- `docs/src/vim.md` - Documentation
 
-Features:
+Setting: `vim.friendly_mode_display` (default: false)
 - Mode labels: "Vim", "Insert", "Replace", "Visual", etc. (instead of "NORMAL", "INSERT")
 - Operator labels: "Delete...", "Change...", "Yank...", etc. (instead of "d", "c", "y")
 - Count display: "3x..." or "Delete 3x..."
 - Hides mode label when operator is pending
-- Properly syncs with vim's internal state (no stale display)
