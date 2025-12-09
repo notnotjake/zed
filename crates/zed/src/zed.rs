@@ -1,5 +1,6 @@
 mod app_menus;
 pub mod component_preview;
+mod editor_controls_status;
 pub mod edit_prediction_registry;
 #[cfg(target_os = "macos")]
 pub(crate) mod mac_only_instance;
@@ -52,6 +53,7 @@ use paths::{
 use project::{DirectoryLister, DisableAiSettings, ProjectItem};
 use project_panel::ProjectPanel;
 use prompt_store::PromptBuilder;
+use editor_controls_status::EditorControlsStatus;
 use quick_action_bar::QuickActionBar;
 use recent_projects::open_remote_project;
 use release_channel::{AppCommitSha, AppVersion, ReleaseChannel};
@@ -445,11 +447,23 @@ pub fn initialize_workspace(
             cx.new(|_| line_ending_selector::LineEndingIndicator::default());
 
         // Add editor-specific status items to floating pane status
+        let editor_controls_status = cx.new(|cx| EditorControlsStatus::new(workspace, cx));
         workspace.editor_pane_status().update(cx, |pane_status, cx| {
             pane_status.add_item(vim_mode_indicator, window, cx);
             pane_status.add_item(cursor_position, window, cx);
             pane_status.add_item(active_buffer_language, window, cx);
+            pane_status.add_item(editor_controls_status, window, cx);
         });
+
+        // Add activity indicator to title bar
+        if let Some(title_bar) = workspace
+            .titlebar_item()
+            .and_then(|item| item.downcast::<title_bar::TitleBar>().ok())
+        {
+            title_bar.update(cx, |title_bar, cx| {
+                title_bar.set_activity_indicator(activity_indicator.clone().into(), cx);
+            });
+        }
 
         // Add remaining items to status bar
         workspace.status_bar().update(cx, |status_bar, cx| {

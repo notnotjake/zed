@@ -26,7 +26,7 @@ use client::{Client, UserStore, zed_urls};
 use cloud_llm_client::{Plan, PlanV1, PlanV2};
 use diagnostics::Deploy as DeployDiagnostics;
 use gpui::{
-    Action, AnyElement, App, Context, Corner, Element, Entity, Focusable, InteractiveElement,
+    Action, AnyElement, AnyView, App, Context, Corner, Element, Entity, Focusable, InteractiveElement,
     IntoElement, MouseButton, ParentElement, Render, StatefulInteractiveElement, Styled,
     Subscription, WeakEntity, Window, actions, div,
 };
@@ -138,6 +138,7 @@ pub struct TitleBar {
     _subscriptions: Vec<Subscription>,
     banner: Entity<OnboardingBanner>,
     screen_share_popover_handle: PopoverMenuHandle<ContextMenu>,
+    activity_indicator: Option<AnyView>,
 }
 
 impl Render for TitleBar {
@@ -175,6 +176,7 @@ impl Render for TitleBar {
                                 })
                         })
                         .child(self.render_diagnostics(cx))
+                        .children(self.activity_indicator.clone())
                 })
                 .on_mouse_down(MouseButton::Left, |_, _, cx| cx.stop_propagation())
                 .into_any_element(),
@@ -324,7 +326,13 @@ impl TitleBar {
             _subscriptions: subscriptions,
             banner,
             screen_share_popover_handle: Default::default(),
+            activity_indicator: None,
         }
+    }
+
+    pub fn set_activity_indicator(&mut self, indicator: AnyView, cx: &mut Context<Self>) {
+        self.activity_indicator = Some(indicator);
+        cx.notify();
     }
 
     fn render_remote_project_connection(&self, cx: &mut Context<Self>) -> Option<AnyElement> {
