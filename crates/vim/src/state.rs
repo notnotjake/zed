@@ -1063,6 +1063,49 @@ impl Operator {
         }
     }
 
+    pub fn friendly_status(&self) -> &'static str {
+        match self {
+            Operator::Change => "Change",
+            Operator::Delete => "Delete",
+            Operator::Yank => "Yank",
+            Operator::Replace => "Replace character",
+            Operator::Object { around: false } => "inner",
+            Operator::Object { around: true } => "around",
+            Operator::FindForward { before: false, .. } => "Find",
+            Operator::FindForward { before: true, .. } => "Till",
+            Operator::FindBackward { after: false, .. } => "Find back",
+            Operator::FindBackward { after: true, .. } => "Till back",
+            Operator::Sneak { .. } => "Sneak",
+            Operator::SneakBackward { .. } => "Sneak back",
+            Operator::AddSurrounds { .. } => "Add surround",
+            Operator::ChangeSurrounds { .. } => "Change surround",
+            Operator::DeleteSurrounds => "Delete surround",
+            Operator::Mark => "Mark",
+            Operator::Jump { .. } => "Jump to",
+            Operator::Indent => "Indent",
+            Operator::Outdent => "Outdent",
+            Operator::AutoIndent => "Auto indent",
+            Operator::Rewrap => "Rewrap",
+            Operator::ShellCommand => "Shell command",
+            Operator::Lowercase => "Lowercase",
+            Operator::Uppercase => "Uppercase",
+            Operator::OppositeCase => "Toggle case",
+            Operator::Rot13 => "ROT13",
+            Operator::Rot47 => "ROT47",
+            Operator::Digraph { .. } => "Digraph",
+            Operator::Literal { .. } => "Literal",
+            Operator::Register => "Register",
+            Operator::RecordRegister => "Record macro",
+            Operator::ReplayRegister => "Replay macro",
+            Operator::ToggleComments => "Toggle comments",
+            Operator::ReplaceWithRegister => "Replace with register",
+            Operator::Exchange => "Exchange",
+            Operator::HelixMatch | Operator::HelixNext { .. } | Operator::HelixPrevious { .. } => {
+                unreachable!()
+            }
+        }
+    }
+
     pub fn is_waiting(&self, mode: Mode) -> bool {
         match self {
             Operator::AddSurrounds { target } => target.is_some() || mode.is_visual(),

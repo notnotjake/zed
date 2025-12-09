@@ -1,8 +1,9 @@
 use gpui::{Context, Element, Entity, FontWeight, Render, Subscription, WeakEntity, Window, div};
+use settings::Settings;
 use ui::text_for_keystrokes;
 use workspace::{StatusItemView, item::ItemHandle, ui::prelude::*};
 
-use crate::{Vim, VimEvent, VimGlobals};
+use crate::{Vim, VimEvent, VimGlobals, VimSettings};
 
 /// The ModeIndicator displays the current mode in the status bar.
 pub struct ModeIndicator {
@@ -83,6 +84,41 @@ impl ModeIndicator {
             .collect::<Vec<_>>()
             .join("")
     }
+
+    fn friendly_operators_description(&self, vim: Entity<Vim>, cx: &mut Context<Self>) -> String {
+        let globals = Vim::globals(cx);
+
+        if let Some(reg) = globals.recording_register {
+            return format!("Recording @{}", reg);
+        }
+
+        let pre_count = globals.pre_count;
+        let post_count = globals.post_count;
+
+        let vim = vim.read(cx);
+
+        let operators: Vec<_> = vim
+            .operator_stack
+            .iter()
+            .map(|item| item.friendly_status())
+            .collect();
+
+        let count = pre_count.or(post_count);
+
+        if operators.is_empty() {
+            if let Some(c) = count {
+                return format!("{}x...", c);
+            }
+            if let Some(reg) = vim.selected_register {
+                return format!("Register \"{}\"", reg);
+            }
+            return String::new();
+        }
+
+        let count_str = count.map(|c| format!(" {}x", c)).unwrap_or_default();
+
+        format!("{}{}...", operators.join(" "), count_str)
+    }
 }
 
 impl Render for ModeIndicator {
@@ -91,6 +127,8 @@ impl Render for ModeIndicator {
         let Some(vim) = vim else {
             return div().hidden().into_any_element();
         };
+
+        let friendly_mode = VimSettings::get_global(cx).friendly_mode_display;
 
         let vim_readable = vim.read(cx);
         let status_label = vim_readable.status_label.clone();
@@ -112,9 +150,55 @@ impl Render for ModeIndicator {
             crate::state::Mode::HelixSelect => colors.vim_helix_select_background,
         };
 
+        let is_vim_mode = matches!(
+            mode,
+            crate::state::Mode::Normal
+                | crate::state::Mode::Insert
+                | crate::state::Mode::Replace
+                | crate::state::Mode::Visual
+                | crate::state::Mode::VisualLine
+                | crate::state::Mode::VisualBlock
+        );
+
         let (label, mode): (SharedString, Option<SharedString>) = if let Some(label) = status_label
         {
             (label, None)
+        } else if friendly_mode && is_vim_mode {
+            let mode_str = match mode {
+                crate::state::Mode::Normal => "Vim",
+                crate::state::Mode::Insert => "Insert",
+                crate::state::Mode::Replace => "Replace",
+                crate::state::Mode::Visual => "Visual",
+                crate::state::Mode::VisualLine => "Visual Line",
+                crate::state::Mode::VisualBlock => "Visual Block",
+                _ => unreachable!(),
+            };
+
+            let mode_str = if temp_mode {
+                format!("(insert) {}", mode_str)
+            } else {
+                mode_str.to_string()
+            };
+
+            let operators_description = self.friendly_operators_description(vim.clone(), cx);
+
+            // Prefer vim's state over pending keystrokes for multi-key bindings
+            // like `gg`, `gU` that vim hasn't fully processed yet
+            let pending = if !operators_description.is_empty() {
+                operators_description
+            } else {
+                self.pending_keys.clone().unwrap_or_default()
+            };
+
+            let show_mode = pending.is_empty();
+            (
+                pending.into(),
+                if show_mode {
+                    Some(mode_str.into())
+                } else {
+                    None
+                },
+            )
         } else {
             let mode_str = if temp_mode {
                 format!("(insert) {}", mode)
