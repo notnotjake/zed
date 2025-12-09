@@ -1408,6 +1408,7 @@ impl Render for TerminalPanel {
                         app_state: workspace.app_state(),
                         project: workspace.project(),
                         workspace: &workspace.weak_handle(),
+                        editor_pane_status: None,
                     },
                     window,
                     cx,

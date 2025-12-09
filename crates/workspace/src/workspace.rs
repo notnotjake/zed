@@ -1,4 +1,5 @@
 pub mod dock;
+pub mod editor_pane_status;
 pub mod history_manager;
 pub mod invalid_item_view;
 pub mod item;
@@ -89,6 +90,8 @@ use sqlez::{
     bindable::{Bind, Column, StaticColumnCount},
     statement::Statement,
 };
+use editor_pane_status::EditorPaneStatus;
+pub use editor_pane_status::EditorPaneStatus as PaneEditorStatus;
 use status_bar::StatusBar;
 pub use status_bar::StatusItemView;
 use std::{
@@ -1141,6 +1144,7 @@ pub struct Workspace {
     last_active_center_pane: Option<WeakEntity<Pane>>,
     last_active_view_id: Option<proto::ViewId>,
     status_bar: Entity<StatusBar>,
+    editor_pane_status: Entity<EditorPaneStatus>,
     modal_layer: Entity<ModalLayer>,
     toast_layer: Entity<ToastLayer>,
     titlebar_item: Option<AnyView>,
@@ -1402,6 +1406,8 @@ impl Workspace {
             status_bar.add_right_item(bottom_dock_buttons, window, cx);
             status_bar
         });
+        let editor_pane_status =
+            cx.new(|cx| EditorPaneStatus::new(&center_pane.clone(), window, cx));
 
         let session_id = app_state.session.read(cx).id().to_owned();
 
@@ -1479,6 +1485,7 @@ impl Workspace {
             last_active_center_pane: Some(center_pane.downgrade()),
             last_active_view_id: None,
             status_bar,
+            editor_pane_status,
             modal_layer,
             toast_layer,
             titlebar_item: None,
@@ -1781,6 +1788,10 @@ impl Workspace {
 
     pub fn status_bar(&self) -> &Entity<StatusBar> {
         &self.status_bar
+    }
+
+    pub fn editor_pane_status(&self) -> &Entity<EditorPaneStatus> {
+        &self.editor_pane_status
     }
 
     pub fn status_bar_visible(&self, cx: &App) -> bool {
@@ -4087,6 +4098,9 @@ impl Workspace {
         // terminal panel panes are not registered as a center panes.
         self.status_bar.update(cx, |status_bar, cx| {
             status_bar.set_active_pane(&pane, window, cx);
+        });
+        self.editor_pane_status.update(cx, |editor_pane_status, cx| {
+            editor_pane_status.set_active_pane(&pane, window, cx);
         });
         if self.active_pane != pane {
             self.set_active_pane(&pane, window, cx);
@@ -6880,6 +6894,7 @@ impl Render for Workspace {
                                                                             app_state: &self.app_state,
                                                                             project: &self.project,
                                                                             workspace: &self.weak_self,
+                                                                            editor_pane_status: Some(self.editor_pane_status.clone().into()),
                                                                         },
                                                                         window,
                                                                         cx,
@@ -6944,6 +6959,7 @@ impl Render for Workspace {
                                                                                     app_state: &self.app_state,
                                                                                     project: &self.project,
                                                                                     workspace: &self.weak_self,
+                                                                                    editor_pane_status: Some(self.editor_pane_status.clone().into()),
                                                                                 },
                                                                                 window,
                                                                                 cx,
@@ -7006,6 +7022,7 @@ impl Render for Workspace {
                                                                                     app_state: &self.app_state,
                                                                                     project: &self.project,
                                                                                     workspace: &self.weak_self,
+                                                                                    editor_pane_status: Some(self.editor_pane_status.clone().into()),
                                                                                 },
                                                                                 window,
                                                                                 cx,
@@ -7054,6 +7071,7 @@ impl Render for Workspace {
                                                                     app_state: &self.app_state,
                                                                     project: &self.project,
                                                                     workspace: &self.weak_self,
+                                                                    editor_pane_status: Some(self.editor_pane_status.clone().into()),
                                                                 },
                                                                 window,
                                                                 cx,

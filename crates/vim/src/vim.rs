@@ -1000,7 +1000,19 @@ impl Vim {
     pub fn enabled(cx: &mut App) -> bool {
         VimModeSetting::get_global(cx).0 || HelixModeSetting::get_global(cx).0
     }
+}
 
+/// Returns the current vim mode as a string, if vim is enabled and focused.
+pub fn current_mode(cx: &mut App) -> Option<String> {
+    if !Vim::enabled(cx) {
+        return None;
+    }
+    Vim::globals(cx)
+        .focused_vim()
+        .map(|vim| vim.read(cx).mode.to_string())
+}
+
+impl Vim {
     /// Called whenever an keystroke is typed so vim can observe all actions
     /// and keystrokes accordingly.
     fn observe_keystrokes(

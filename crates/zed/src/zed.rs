@@ -443,16 +443,22 @@ pub fn initialize_workspace(
             cx.new(|_| go_to_line::cursor_position::CursorPosition::new(workspace));
         let line_ending_indicator =
             cx.new(|_| line_ending_selector::LineEndingIndicator::default());
+
+        // Add editor-specific status items to floating pane status
+        workspace.editor_pane_status().update(cx, |pane_status, cx| {
+            pane_status.add_item(vim_mode_indicator, window, cx);
+            pane_status.add_item(cursor_position, window, cx);
+            pane_status.add_item(active_buffer_language, window, cx);
+        });
+
+        // Add remaining items to status bar
         workspace.status_bar().update(cx, |status_bar, cx| {
             status_bar.add_left_item(search_button, window, cx);
             status_bar.add_left_item(lsp_button, window, cx);
             status_bar.add_left_item(activity_indicator, window, cx);
             status_bar.add_right_item(edit_prediction_ui, window, cx);
-            status_bar.add_right_item(active_buffer_language, window, cx);
             status_bar.add_right_item(active_toolchain_language, window, cx);
             status_bar.add_right_item(line_ending_indicator, window, cx);
-            status_bar.add_right_item(vim_mode_indicator, window, cx);
-            status_bar.add_right_item(cursor_position, window, cx);
             status_bar.add_right_item(image_info, window, cx);
         });
 
@@ -1167,7 +1173,7 @@ fn initialize_pane(
             toolbar.add_item(agent_diff_toolbar, window, cx);
             let basedpyright_banner = cx.new(|cx| BasedPyrightBanner::new(workspace, cx));
             toolbar.add_item(basedpyright_banner, window, cx);
-        })
+        });
     });
 }
 
