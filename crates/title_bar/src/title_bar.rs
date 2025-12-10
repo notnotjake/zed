@@ -579,28 +579,16 @@ impl TitleBar {
         let summary = self.project.read(cx).diagnostic_summary(false, cx);
 
         let diagnostic_indicator = match (summary.error_count, summary.warning_count) {
-            (0, 0) => h_flex().child(
-                Icon::new(IconName::Check)
-                    .size(IconSize::Small)
-                    .color(Color::Default),
-            ),
+            (0, 0) => h_flex().child(Indicator::dot().color(Color::Success)),
             (error_count, warning_count) => h_flex()
                 .gap_1()
                 .when(error_count > 0, |this| {
-                    this.child(
-                        Icon::new(IconName::XCircle)
-                            .size(IconSize::Small)
-                            .color(Color::Error),
-                    )
-                    .child(Label::new(error_count.to_string()).size(LabelSize::Small))
+                    this.child(Indicator::dot().color(Color::Error))
+                        .child(Label::new(error_count.to_string()).size(LabelSize::Small))
                 })
                 .when(warning_count > 0, |this| {
-                    this.child(
-                        Icon::new(IconName::Warning)
-                            .size(IconSize::Small)
-                            .color(Color::Warning),
-                    )
-                    .child(Label::new(warning_count.to_string()).size(LabelSize::Small))
+                    this.child(Indicator::dot().color(Color::Warning))
+                        .child(Label::new(warning_count.to_string()).size(LabelSize::Small))
                 }),
         };
 
