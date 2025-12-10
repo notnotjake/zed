@@ -26,18 +26,14 @@ impl Render for EditorPaneStatus {
     fn render(&mut self, _window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         let colors = cx.theme().colors();
         let bg_color = colors.editor_background;
-        let border_color = colors.border;
 
         h_flex()
             .absolute()
             .bottom_2()
             .right_2()
             .gap_2()
-            .px_2()
-            .py_0p5()
+            .p_1()
             .bg(bg_color)
-            .border_1()
-            .border_color(border_color)
             .rounded_md()
             .children(self.items.iter().map(|item| item.to_any()))
     }
