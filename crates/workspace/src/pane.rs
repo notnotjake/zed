@@ -3093,6 +3093,25 @@ impl Pane {
                 }
             });
 
+        let zoomed = self.is_zoomed();
+        let zoom_icon = if zoomed {
+            IconName::MinimizeFilled
+        } else {
+            IconName::Maximize
+        };
+        let toggle_zoom = IconButton::new("toggle_zoom", zoom_icon)
+            .icon_size(IconSize::Small)
+            .on_click(cx.listener(|pane, _, window, cx| {
+                pane.toggle_zoom(&crate::ToggleZoom, window, cx);
+            }))
+            .tooltip(move |_window, cx| {
+                Tooltip::for_action(
+                    if zoomed { "Zoom Out" } else { "Zoom In" },
+                    &ToggleZoom,
+                    cx,
+                )
+            });
+
         let mut tab_items = self
             .items
             .iter()
@@ -3125,6 +3144,7 @@ impl Pane {
                         .start_child(navigate_forward)
                 },
             )
+            .start_child(toggle_zoom)
             .map(|tab_bar| {
                 if self.show_tab_bar_buttons {
                     let render_tab_buttons = self.render_tab_bar_buttons.clone();
@@ -3635,18 +3655,11 @@ fn default_render_tab_bar_buttons(
     if !pane.has_focus(window, cx) && !pane.context_menu_focused(window, cx) {
         return (None, None);
     }
-    let (can_clone, can_split_move) = match pane.active_item() {
-        Some(active_item) if active_item.can_split(cx) => (true, false),
-        Some(_) => (false, pane.items_len() > 1),
-        None => (false, false),
-    };
-    // Ideally we would return a vec of elements here to pass directly to the [TabBar]'s
-    // `end_slot`, but due to needing a view here that isn't possible.
+
     let right_children = h_flex()
-        // Instead we need to replicate the spacing from the [TabBar]'s `end_slot` here.
         .gap(DynamicSpacing::Base04.rems(cx))
         .child(
-            PopoverMenu::new("pane-tab-bar-popover-menu")
+            PopoverMenu::new("pane-tab-bar-new-menu")
                 .trigger_with_tooltip(
                     IconButton::new("plus", IconName::Plus).icon_size(IconSize::Small),
                     Tooltip::text("New..."),
@@ -3655,7 +3668,10 @@ fn default_render_tab_bar_buttons(
                 .with_handle(pane.new_item_context_menu_handle.clone())
                 .menu(move |window, cx| {
                     Some(ContextMenu::build(window, cx, |menu, _, _| {
-                        menu.action("New File", NewFile.boxed_clone())
+                        menu.action("Split Right", SplitRight.boxed_clone())
+                            .action("Split Down", SplitDown.boxed_clone())
+                            .separator()
+                            .action("New File", NewFile.boxed_clone())
                             .action("Open File", ToggleFileFinder::default().boxed_clone())
                             .separator()
                             .action(
@@ -3673,50 +3689,6 @@ fn default_render_tab_bar_buttons(
                     }))
                 }),
         )
-        .child(
-            PopoverMenu::new("pane-tab-bar-split")
-                .trigger_with_tooltip(
-                    IconButton::new("split", IconName::Split)
-                        .icon_size(IconSize::Small)
-                        .disabled(!can_clone && !can_split_move),
-                    Tooltip::text("Split Pane"),
-                )
-                .anchor(Corner::TopRight)
-                .with_handle(pane.split_item_context_menu_handle.clone())
-                .menu(move |window, cx| {
-                    ContextMenu::build(window, cx, |menu, _, _| {
-                        if can_split_move {
-                            menu.action("Split Right", SplitAndMoveRight.boxed_clone())
-                                .action("Split Left", SplitAndMoveLeft.boxed_clone())
-                                .action("Split Up", SplitAndMoveUp.boxed_clone())
-                                .action("Split Down", SplitAndMoveDown.boxed_clone())
-                        } else {
-                            menu.action("Split Right", SplitRight.boxed_clone())
-                                .action("Split Left", SplitLeft.boxed_clone())
-                                .action("Split Up", SplitUp.boxed_clone())
-                                .action("Split Down", SplitDown.boxed_clone())
-                        }
-                    })
-                    .into()
-                }),
-        )
-        .child({
-            let zoomed = pane.is_zoomed();
-            IconButton::new("toggle_zoom", IconName::Maximize)
-                .icon_size(IconSize::Small)
-                .toggle_state(zoomed)
-                .selected_icon(IconName::Minimize)
-                .on_click(cx.listener(|pane, _, window, cx| {
-                    pane.toggle_zoom(&crate::ToggleZoom, window, cx);
-                }))
-                .tooltip(move |_window, cx| {
-                    Tooltip::for_action(
-                        if zoomed { "Zoom Out" } else { "Zoom In" },
-                        &ToggleZoom,
-                        cx,
-                    )
-                })
-        })
         .into_any_element()
         .into();
     (None, right_children)
