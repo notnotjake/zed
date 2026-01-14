@@ -19,7 +19,7 @@ mod toolbar;
 mod workspace_settings;
 
 pub use crate::notifications::NotificationFrame;
-pub use dock::Panel;
+pub use dock::{Panel, PanelButtons};
 pub use path_list::PathList;
 pub use toast_layer::{ToastAction, ToastLayer, ToastView};
 
@@ -30,7 +30,7 @@ use client::{
     proto::{self, ErrorCode, PanelId, PeerId},
 };
 use collections::{HashMap, HashSet, hash_map};
-use dock::{Dock, DockPosition, PanelButtons, PanelHandle, RESIZE_HANDLE_SIZE};
+use dock::{Dock, DockPosition, PanelHandle, RESIZE_HANDLE_SIZE};
 use futures::{
     Future, FutureExt, StreamExt,
     channel::{

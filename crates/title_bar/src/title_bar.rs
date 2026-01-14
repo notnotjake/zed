@@ -44,7 +44,8 @@ use ui::{
 };
 use util::{ResultExt, rel_path::RelPath};
 use workspace::{
-    ToggleBottomDock, ToggleLeftDock, ToggleRightDock, Workspace, notifications::NotifyResultExt,
+    PanelButtons, ToggleBottomDock, ToggleLeftDock, ToggleRightDock, Workspace,
+    notifications::NotifyResultExt,
 };
 use zed_actions::{OpenRecent, OpenRemote};
 
@@ -139,6 +140,9 @@ pub struct TitleBar {
     banner: Entity<OnboardingBanner>,
     screen_share_popover_handle: PopoverMenuHandle<ContextMenu>,
     activity_indicator: Option<AnyView>,
+    left_panel_buttons: Entity<PanelButtons>,
+    bottom_panel_buttons: Entity<PanelButtons>,
+    right_panel_buttons: Entity<PanelButtons>,
 }
 
 impl Render for TitleBar {
@@ -205,6 +209,7 @@ impl Render for TitleBar {
                 })
                 .gap_1()
                 .on_mouse_down(MouseButton::Left, |_, _, cx| cx.stop_propagation())
+                .child(self.render_panel_buttons())
                 .child(self.render_dock_buttons(cx))
                 .children(self.render_call_controls(window, cx))
                 .children(self.render_connection_status(status, cx))
@@ -316,6 +321,13 @@ impl TitleBar {
 
         let platform_titlebar = cx.new(|cx| PlatformTitleBar::new(id, cx));
 
+        let left_panel_buttons =
+            cx.new(|cx| PanelButtons::new(workspace.left_dock().clone(), cx));
+        let bottom_panel_buttons =
+            cx.new(|cx| PanelButtons::new(workspace.bottom_dock().clone(), cx));
+        let right_panel_buttons =
+            cx.new(|cx| PanelButtons::new(workspace.right_dock().clone(), cx));
+
         Self {
             platform_titlebar,
             application_menu,
@@ -327,6 +339,9 @@ impl TitleBar {
             banner,
             screen_share_popover_handle: Default::default(),
             activity_indicator: None,
+            left_panel_buttons,
+            bottom_panel_buttons,
+            right_panel_buttons,
         }
     }
 
@@ -600,6 +615,14 @@ impl TitleBar {
             .on_click(|_, window, cx| {
                 window.dispatch_action(DeployDiagnostics.boxed_clone(), cx);
             })
+    }
+
+    pub fn render_panel_buttons(&self) -> impl IntoElement {
+        h_flex()
+            .gap_0p5()
+            .child(self.left_panel_buttons.clone())
+            .child(self.bottom_panel_buttons.clone())
+            .child(self.right_panel_buttons.clone())
     }
 
     pub fn render_dock_buttons(&self, cx: &App) -> impl IntoElement {
