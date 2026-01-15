@@ -3230,7 +3230,7 @@ impl Pane {
         let focus_handle = self.focus_handle.clone();
         let is_pane_focused = self.has_focus(window, cx);
 
-        let navigate_backward = IconButton::new("navigate_backward", IconName::ArrowLeft)
+        let navigate_backward = IconButton::new("navigate_backward", IconName::ChevronLeft)
             .icon_size(IconSize::Small)
             .on_click({
                 let entity = cx.entity();
@@ -3317,7 +3317,7 @@ impl Pane {
             })
         };
 
-        let navigate_forward = IconButton::new("navigate_forward", IconName::ArrowRight)
+        let navigate_forward = IconButton::new("navigate_forward", IconName::ChevronRight)
             .icon_size(IconSize::Small)
             .on_click({
                 let entity = cx.entity();
