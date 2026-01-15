@@ -4075,10 +4075,13 @@ fn default_render_tab_bar_buttons(
         None => (false, false),
     };
     let zoomed = pane.is_zoomed();
-    let left_children = IconButton::new("toggle_zoom", IconName::Maximize)
+    let zoom_icon = if zoomed {
+        IconName::MinimizeFilled
+    } else {
+        IconName::Maximize
+    };
+    let left_children = IconButton::new("toggle_zoom", zoom_icon)
         .icon_size(IconSize::Small)
-        .toggle_state(zoomed)
-        .selected_icon(IconName::Minimize)
         .on_click(cx.listener(|pane, _, window, cx| {
             pane.toggle_zoom(&crate::ToggleZoom, window, cx);
         }))

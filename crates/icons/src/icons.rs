@@ -173,6 +173,7 @@ pub enum IconName {
     Mic,
     MicMute,
     Minimize,
+    MinimizeFilled,
     Notepad,
     Option,
     PageDown,
