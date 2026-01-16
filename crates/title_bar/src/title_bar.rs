@@ -24,6 +24,7 @@ use crate::application_menu::{
 use auto_update::AutoUpdateStatus;
 use call::ActiveCall;
 use client::{Client, UserStore, zed_urls};
+use diagnostics::{Deploy as DeployDiagnostics, items::render_diagnostic_summary};
 use cloud_llm_client::{Plan, PlanV2};
 use gpui::{
     Action, AnyElement, App, Context, Corner, Element, Entity, FocusHandle, Focusable,
@@ -185,6 +186,7 @@ impl Render for TitleBar {
                                 .when(title_bar_settings.show_branch_name, |title_bar| {
                                     title_bar.children(self.render_project_branch(cx))
                                 })
+                                .child(self.render_diagnostics(cx))
                         })
                 })
                 .on_mouse_down(MouseButton::Left, |_, _, cx| cx.stop_propagation())
@@ -297,11 +299,19 @@ impl TitleBar {
         );
         subscriptions.push(
             cx.subscribe(&project, |this, _, event: &project::Event, cx| {
-                if let project::Event::BufferEdited = event {
-                    // Clear override when user types in any editor,
-                    // so the title bar reflects the project they're actually working in
-                    this.clear_active_worktree_override(cx);
-                    cx.notify();
+                match event {
+                    project::Event::BufferEdited => {
+                        // Clear override when user types in any editor,
+                        // so the title bar reflects the project they're actually working in
+                        this.clear_active_worktree_override(cx);
+                        cx.notify();
+                    }
+                    project::Event::DiagnosticsUpdated { .. }
+                    | project::Event::DiskBasedDiagnosticsFinished { .. }
+                    | project::Event::LanguageServerRemoved(_) => {
+                        cx.notify();
+                    }
+                    _ => {}
                 }
             }),
         );
@@ -744,6 +754,19 @@ impl TitleBar {
                 },
             )
             .anchor(gpui::Corner::TopLeft)
+    }
+
+    pub fn render_diagnostics(&self, cx: &App) -> impl IntoElement {
+        let summary = self.project.read(cx).diagnostic_summary(false, cx);
+
+        ButtonLike::new("diagnostic-indicator")
+            .child(render_diagnostic_summary(&summary))
+            .tooltip(move |_window, cx| {
+                Tooltip::for_action("Project Diagnostics", &DeployDiagnostics, cx)
+            })
+            .on_click(|_, window, cx| {
+                window.dispatch_action(DeployDiagnostics.boxed_clone(), cx);
+            })
     }
 
     pub fn render_project_branch(&self, cx: &mut Context<Self>) -> Option<impl IntoElement> {

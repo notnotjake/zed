@@ -17010,6 +17010,7 @@ dependencies = [
  "cloud_llm_client",
  "collections",
  "db",
+ "diagnostics",
  "git_ui",
  "gpui",
  "http_client",
