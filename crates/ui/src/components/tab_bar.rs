@@ -166,8 +166,6 @@ impl RenderOnce for TabBar {
                                         .flex_none()
                                         .pl(DynamicSpacing::Base04.rems(cx))
                                         .gap(DynamicSpacing::Base04.rems(cx))
-                                        .border_l_1()
-                                        .border_color(cx.theme().colors().border)
                                         .children(self.end_children),
                                 )
                             }),
