@@ -14,6 +14,36 @@ use workspace::{StatusItemView, ToolbarItemEvent, Workspace, item::ItemHandle};
 
 use crate::{Deploy, IncludeWarnings, ProjectDiagnosticsEditor};
 
+/// Renders the diagnostic summary indicator (icons + counts).
+/// This is shared between the status bar and title bar.
+pub fn render_diagnostic_summary(summary: &project::DiagnosticSummary) -> impl IntoElement {
+    match (summary.error_count, summary.warning_count) {
+        (0, 0) => h_flex().child(
+            Icon::new(IconName::Check)
+                .size(IconSize::Small)
+                .color(Color::Default),
+        ),
+        (error_count, warning_count) => h_flex()
+            .gap_1()
+            .when(error_count > 0, |this| {
+                this.child(
+                    Icon::new(IconName::XCircle)
+                        .size(IconSize::Small)
+                        .color(Color::Error),
+                )
+                .child(Label::new(error_count.to_string()).size(LabelSize::Small))
+            })
+            .when(warning_count > 0, |this| {
+                this.child(
+                    Icon::new(IconName::Warning)
+                        .size(IconSize::Small)
+                        .color(Color::Warning),
+                )
+                .child(Label::new(warning_count.to_string()).size(LabelSize::Small))
+            }),
+    }
+}
+
 /// The status bar item that displays diagnostic counts.
 pub struct DiagnosticIndicator {
     summary: project::DiagnosticSummary,
@@ -33,31 +63,7 @@ impl Render for DiagnosticIndicator {
             return indicator.hidden();
         }
 
-        let diagnostic_indicator = match (self.summary.error_count, self.summary.warning_count) {
-            (0, 0) => h_flex().child(
-                Icon::new(IconName::Check)
-                    .size(IconSize::Small)
-                    .color(Color::Default),
-            ),
-            (error_count, warning_count) => h_flex()
-                .gap_1()
-                .when(error_count > 0, |this| {
-                    this.child(
-                        Icon::new(IconName::XCircle)
-                            .size(IconSize::Small)
-                            .color(Color::Error),
-                    )
-                    .child(Label::new(error_count.to_string()).size(LabelSize::Small))
-                })
-                .when(warning_count > 0, |this| {
-                    this.child(
-                        Icon::new(IconName::Warning)
-                            .size(IconSize::Small)
-                            .color(Color::Warning),
-                    )
-                    .child(Label::new(warning_count.to_string()).size(LabelSize::Small))
-                }),
-        };
+        let diagnostic_indicator = render_diagnostic_summary(&self.summary);
 
         let status = if let Some(diagnostic) = &self.current_diagnostic {
             let message = diagnostic
