@@ -40,11 +40,14 @@ use std::sync::Arc;
 use theme::ActiveTheme;
 use title_bar_settings::TitleBarSettings;
 use ui::{
-    Avatar, ButtonLike, Chip, ContextMenu, IconWithIndicator, Indicator, PopoverMenu,
+    Avatar, ButtonLike, Chip, ContextMenu, IconButton, IconWithIndicator, Indicator, PopoverMenu,
     PopoverMenuHandle, TintColor, Tooltip, prelude::*,
 };
 use util::ResultExt;
-use workspace::{SwitchProject, ToggleWorktreeSecurity, Workspace, notifications::NotifyResultExt};
+use workspace::{
+    SwitchProject, ToggleBottomDock, ToggleLeftDock, ToggleRightDock, ToggleWorktreeSecurity,
+    Workspace, notifications::NotifyResultExt,
+};
 use zed_actions::OpenRemote;
 
 pub use onboarding_banner::restore_banner;
@@ -214,6 +217,7 @@ impl Render for TitleBar {
                 })
                 .gap_1()
                 .on_mouse_down(MouseButton::Left, |_, _, cx| cx.stop_propagation())
+                .child(self.render_dock_buttons(cx))
                 .children(self.render_call_controls(window, cx))
                 .children(self.render_connection_status(status, cx))
                 .when(
@@ -1032,5 +1036,75 @@ impl TitleBar {
                 }
             })
             .anchor(gpui::Corner::TopRight)
+    }
+
+    pub fn render_dock_buttons(&self, cx: &App) -> impl IntoElement {
+        let (left_dock_open, bottom_dock_open, right_dock_open) = self
+            .workspace
+            .upgrade()
+            .map(|workspace| {
+                let workspace = workspace.read(cx);
+                (
+                    workspace.left_dock().read(cx).is_open(),
+                    workspace.bottom_dock().read(cx).is_open(),
+                    workspace.right_dock().read(cx).is_open(),
+                )
+            })
+            .unwrap_or((false, false, false));
+
+        let left_icon = if left_dock_open {
+            IconName::LayoutSidebarLeftFilled
+        } else {
+            IconName::LayoutSidebarLeft
+        };
+        let bottom_icon = if bottom_dock_open {
+            IconName::LayoutSidebarBottomFilled
+        } else {
+            IconName::LayoutSidebarBottom
+        };
+        let right_icon = if right_dock_open {
+            IconName::LayoutSidebarRightFilled
+        } else {
+            IconName::LayoutSidebarRight
+        };
+
+        h_flex()
+            .gap_0p5()
+            .child(
+                IconButton::new("toggle-left-dock", left_icon)
+                    .icon_size(IconSize::Small)
+                    .style(ButtonStyle::Subtle)
+                    .toggle_state(left_dock_open)
+                    .tooltip(move |_window, cx| {
+                        Tooltip::for_action("Toggle Left Dock", &ToggleLeftDock, cx)
+                    })
+                    .on_click(|_, window, cx| {
+                        window.dispatch_action(ToggleLeftDock.boxed_clone(), cx);
+                    }),
+            )
+            .child(
+                IconButton::new("toggle-bottom-dock", bottom_icon)
+                    .icon_size(IconSize::Small)
+                    .style(ButtonStyle::Subtle)
+                    .toggle_state(bottom_dock_open)
+                    .tooltip(move |_window, cx| {
+                        Tooltip::for_action("Toggle Bottom Dock", &ToggleBottomDock, cx)
+                    })
+                    .on_click(|_, window, cx| {
+                        window.dispatch_action(ToggleBottomDock.boxed_clone(), cx);
+                    }),
+            )
+            .child(
+                IconButton::new("toggle-right-dock", right_icon)
+                    .icon_size(IconSize::Small)
+                    .style(ButtonStyle::Subtle)
+                    .toggle_state(right_dock_open)
+                    .tooltip(move |_window, cx| {
+                        Tooltip::for_action("Toggle Right Dock", &ToggleRightDock, cx)
+                    })
+                    .on_click(|_, window, cx| {
+                        window.dispatch_action(ToggleRightDock.boxed_clone(), cx);
+                    }),
+            )
     }
 }
