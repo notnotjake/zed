@@ -452,7 +452,7 @@ pub fn initialize_workspace(
             status_bar.add_left_item(search_button, window, cx);
             status_bar.add_left_item(lsp_button, window, cx);
             status_bar.add_left_item(diagnostic_summary, window, cx);
-            status_bar.add_left_item(activity_indicator, window, cx);
+            status_bar.add_left_item(activity_indicator.clone(), window, cx);
             status_bar.add_right_item(edit_prediction_ui, window, cx);
             status_bar.add_right_item(active_buffer_encoding, window, cx);
             status_bar.add_right_item(active_buffer_language, window, cx);
@@ -462,6 +462,15 @@ pub fn initialize_workspace(
             status_bar.add_right_item(cursor_position, window, cx);
             status_bar.add_right_item(image_info, window, cx);
         });
+
+        if let Some(title_bar) = workspace
+            .titlebar_item()
+            .and_then(|item| item.downcast::<title_bar::TitleBar>().ok())
+        {
+            title_bar.update(cx, |title_bar, cx| {
+                title_bar.set_activity_indicator(activity_indicator.into(), cx);
+            });
+        }
 
         let handle = cx.entity().downgrade();
         window.on_window_should_close(cx, move |window, cx| {

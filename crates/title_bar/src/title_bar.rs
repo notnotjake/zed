@@ -26,7 +26,7 @@ use call::ActiveCall;
 use client::{Client, UserStore, zed_urls};
 use cloud_llm_client::{Plan, PlanV2};
 use gpui::{
-    Action, AnyElement, App, Context, Corner, Element, Entity, FocusHandle, Focusable,
+    Action, AnyElement, AnyView, App, Context, Corner, Element, Entity, FocusHandle, Focusable,
     InteractiveElement, IntoElement, MouseButton, ParentElement, Render,
     StatefulInteractiveElement, Styled, Subscription, WeakEntity, Window, actions, div,
 };
@@ -149,6 +149,7 @@ pub struct TitleBar {
     banner: Entity<OnboardingBanner>,
     screen_share_popover_handle: PopoverMenuHandle<ContextMenu>,
     project_dropdown_handle: PopoverMenuHandle<ProjectDropdown>,
+    activity_indicator: Option<AnyView>,
 }
 
 impl Render for TitleBar {
@@ -186,6 +187,7 @@ impl Render for TitleBar {
                                     title_bar.children(self.render_project_branch(cx))
                                 })
                         })
+                        .children(self.activity_indicator.clone())
                 })
                 .on_mouse_down(MouseButton::Left, |_, _, cx| cx.stop_propagation())
                 .into_any_element(),
@@ -354,7 +356,13 @@ impl TitleBar {
             banner,
             screen_share_popover_handle: PopoverMenuHandle::default(),
             project_dropdown_handle: PopoverMenuHandle::default(),
+            activity_indicator: None,
         }
+    }
+
+    pub fn set_activity_indicator(&mut self, indicator: AnyView, cx: &mut Context<Self>) {
+        self.activity_indicator = Some(indicator);
+        cx.notify();
     }
 
     fn worktree_count(&self, cx: &App) -> usize {
