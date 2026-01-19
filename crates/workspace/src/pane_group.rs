@@ -314,7 +314,6 @@ impl Member {
     }
 }
 
-#[derive(Clone, Copy)]
 pub struct PaneRenderContext<'a> {
     pub project: &'a Entity<Project>,
     pub follower_states: &'a HashMap<CollaboratorId, FollowerState>,
@@ -322,6 +321,7 @@ pub struct PaneRenderContext<'a> {
     pub active_pane: &'a Entity<Pane>,
     pub app_state: &'a Arc<AppState>,
     pub workspace: &'a WeakEntity<Workspace>,
+    pub editor_pane_status: Option<AnyView>,
 }
 
 #[derive(Default)]
@@ -334,6 +334,9 @@ pub trait PaneLeaderDecorator {
     fn decorate(&self, pane: &Entity<Pane>, cx: &App) -> LeaderDecoration;
     fn active_pane(&self) -> &Entity<Pane>;
     fn workspace(&self) -> &WeakEntity<Workspace>;
+    fn editor_pane_status(&self) -> Option<AnyView> {
+        None
+    }
 }
 
 pub struct ActivePaneDecorator<'a> {
@@ -483,6 +486,10 @@ impl PaneLeaderDecorator for PaneRenderContext<'_> {
     fn workspace(&self) -> &WeakEntity<Workspace> {
         self.workspace
     }
+
+    fn editor_pane_status(&self) -> Option<AnyView> {
+        self.editor_pane_status.clone()
+    }
 }
 
 impl Member {
@@ -536,6 +543,11 @@ impl Member {
 
                 let decoration = render_cx.decorate(pane, cx);
                 let is_active = pane == render_cx.active_pane();
+                let editor_pane_status = if is_active {
+                    render_cx.editor_pane_status()
+                } else {
+                    None
+                };
 
                 PaneRenderResult {
                     element: div()
@@ -558,6 +570,7 @@ impl Member {
                             )
                         })
                         .children(decoration.status_box)
+                        .children(editor_pane_status)
                         .into_any(),
                     contains_active_pane: is_active,
                 }
