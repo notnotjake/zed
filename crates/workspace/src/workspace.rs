@@ -13,6 +13,7 @@ mod security_modal;
 pub mod shared_screen;
 mod status_bar;
 pub mod tasks;
+pub mod title_bar_items;
 mod theme_preview;
 mod toast_layer;
 mod toolbar;
@@ -21,7 +22,7 @@ pub mod welcome;
 mod workspace_settings;
 
 pub use crate::notifications::NotificationFrame;
-pub use dock::Panel;
+pub use dock::{Panel, PanelButtons};
 pub use path_list::PathList;
 pub use toast_layer::{ToastAction, ToastLayer, ToastView};
 
@@ -32,7 +33,7 @@ use client::{
     proto::{self, ErrorCode, PanelId, PeerId},
 };
 use collections::{HashMap, HashSet, hash_map};
-use dock::{Dock, DockPosition, PanelButtons, PanelHandle, RESIZE_HANDLE_SIZE};
+use dock::{Dock, DockPosition, PanelHandle, RESIZE_HANDLE_SIZE};
 use feature_flags::{AgentV2FeatureFlag, FeatureFlagAppExt};
 use futures::{
     Future, FutureExt, StreamExt,
@@ -1182,6 +1183,9 @@ pub struct Workspace {
     left_dock: Entity<Dock>,
     bottom_dock: Entity<Dock>,
     right_dock: Entity<Dock>,
+    left_dock_buttons: Entity<PanelButtons>,
+    bottom_dock_buttons: Entity<PanelButtons>,
+    right_dock_buttons: Entity<PanelButtons>,
     panes: Vec<Entity<Pane>>,
     active_worktree_override: Option<WorktreeId>,
     panes_by_item: HashMap<EntityId, WeakEntity<Pane>>,
@@ -1189,6 +1193,7 @@ pub struct Workspace {
     last_active_center_pane: Option<WeakEntity<Pane>>,
     last_active_view_id: Option<proto::ViewId>,
     status_bar: Entity<StatusBar>,
+    title_bar_items: Entity<title_bar_items::TitleBarItems>,
     modal_layer: Entity<ModalLayer>,
     toast_layer: Entity<ToastLayer>,
     titlebar_item: Option<AnyView>,
@@ -1488,11 +1493,12 @@ impl Workspace {
         let right_dock_buttons = cx.new(|cx| PanelButtons::new(right_dock.clone(), cx));
         let status_bar = cx.new(|cx| {
             let mut status_bar = StatusBar::new(&center_pane.clone(), window, cx);
-            status_bar.add_left_item(left_dock_buttons, window, cx);
-            status_bar.add_right_item(right_dock_buttons, window, cx);
-            status_bar.add_right_item(bottom_dock_buttons, window, cx);
+            status_bar.add_left_item(left_dock_buttons.clone(), window, cx);
+            status_bar.add_right_item(right_dock_buttons.clone(), window, cx);
+            status_bar.add_right_item(bottom_dock_buttons.clone(), window, cx);
             status_bar
         });
+        let title_bar_items = cx.new(|_cx| title_bar_items::TitleBarItems::new());
 
         let session_id = app_state.session.read(cx).id().to_owned();
 
@@ -1591,6 +1597,7 @@ impl Workspace {
             last_active_center_pane: Some(center_pane.downgrade()),
             last_active_view_id: None,
             status_bar,
+            title_bar_items,
             modal_layer,
             toast_layer,
             titlebar_item: None,
@@ -1600,6 +1607,9 @@ impl Workspace {
             left_dock,
             bottom_dock,
             right_dock,
+            left_dock_buttons,
+            bottom_dock_buttons,
+            right_dock_buttons,
             project: project.clone(),
             follower_states: Default::default(),
             last_leaders_by_pane: Default::default(),
@@ -1871,6 +1881,22 @@ impl Workspace {
         &self.right_dock
     }
 
+    /// Returns panel button entities for all docks (left, bottom, right).
+    /// These can be rendered in multiple locations (status bar, title bar) to stay in sync.
+    pub fn panel_buttons(
+        &self,
+    ) -> (
+        &Entity<PanelButtons>,
+        &Entity<PanelButtons>,
+        &Entity<PanelButtons>,
+    ) {
+        (
+            &self.left_dock_buttons,
+            &self.bottom_dock_buttons,
+            &self.right_dock_buttons,
+        )
+    }
+
     pub fn all_docks(&self) -> [&Entity<Dock>; 3] {
         [&self.left_dock, &self.bottom_dock, &self.right_dock]
     }
@@ -1928,6 +1954,11 @@ impl Workspace {
 
     pub fn status_bar(&self) -> &Entity<StatusBar> {
         &self.status_bar
+    }
+
+    /// Returns the container for status items that should be mirrored to the title bar.
+    pub fn title_bar_items(&self) -> &Entity<title_bar_items::TitleBarItems> {
+        &self.title_bar_items
     }
 
     pub fn status_bar_visible(&self, cx: &App) -> bool {
