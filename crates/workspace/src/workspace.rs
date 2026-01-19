@@ -1969,8 +1969,8 @@ impl Workspace {
         &self.editor_pane_status
     }
 
-    pub fn status_bar_visible(&self, cx: &App) -> bool {
-        StatusBarSettings::get_global(cx).show
+    pub fn status_bar_visible(&self, _cx: &App) -> bool {
+        false
     }
 
     pub fn app_state(&self) -> &Arc<AppState> {
