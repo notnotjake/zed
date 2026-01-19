@@ -4066,14 +4066,6 @@ fn default_render_tab_bar_buttons(
     window: &mut Window,
     cx: &mut Context<Pane>,
 ) -> (Option<AnyElement>, Option<AnyElement>) {
-    if !pane.has_focus(window, cx) && !pane.context_menu_focused(window, cx) {
-        return (None, None);
-    }
-    let (can_clone, can_split_move) = match pane.active_item() {
-        Some(active_item) if active_item.can_split(cx) => (true, false),
-        Some(_) => (false, pane.items_len() > 1),
-        None => (false, false),
-    };
     let zoomed = pane.is_zoomed();
     let left_children = IconButton::new("toggle_zoom", IconName::Maximize)
         .icon_size(IconSize::Small)
@@ -4087,6 +4079,16 @@ fn default_render_tab_bar_buttons(
         })
         .into_any_element()
         .into();
+
+    if !pane.has_focus(window, cx) && !pane.context_menu_focused(window, cx) {
+        return (left_children, None);
+    }
+
+    let (can_clone, can_split_move) = match pane.active_item() {
+        Some(active_item) if active_item.can_split(cx) => (true, false),
+        Some(_) => (false, pane.items_len() > 1),
+        None => (false, false),
+    };
 
     let right_children = h_flex()
         .gap(DynamicSpacing::Base04.rems(cx))
