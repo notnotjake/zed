@@ -456,8 +456,8 @@ pub fn initialize_workspace(
             status_bar.add_right_item(edit_prediction_ui.clone(), window, cx);
             status_bar.add_right_item(active_buffer_encoding.clone(), window, cx);
             status_bar.add_right_item(active_buffer_language.clone(), window, cx);
-            status_bar.add_right_item(active_toolchain_language, window, cx);
-            status_bar.add_right_item(line_ending_indicator, window, cx);
+            status_bar.add_right_item(active_toolchain_language.clone(), window, cx);
+            status_bar.add_right_item(line_ending_indicator.clone(), window, cx);
             status_bar.add_right_item(vim_mode_indicator.clone(), window, cx);
             status_bar.add_right_item(cursor_position.clone(), window, cx);
             status_bar.add_right_item(image_info, window, cx);
@@ -482,6 +482,8 @@ pub fn initialize_workspace(
             pane_status.add_item(vim_mode_indicator.into(), cx);
             pane_status.add_item(cursor_position.into(), cx);
             pane_status.add_item(active_buffer_language.into(), cx);
+            pane_status.add_item(active_toolchain_language.into(), cx);
+            pane_status.add_item(line_ending_indicator.into(), cx);
             pane_status.add_item(active_buffer_encoding.into(), cx);
             pane_status.add_item(edit_prediction_ui.into(), cx);
         });
