@@ -12,6 +12,7 @@ pub mod searchable;
 mod security_modal;
 pub mod shared_screen;
 mod status_bar;
+pub mod editor_pane_status;
 pub mod tasks;
 mod theme_preview;
 mod toast_layer;
@@ -1189,6 +1190,7 @@ pub struct Workspace {
     last_active_center_pane: Option<WeakEntity<Pane>>,
     last_active_view_id: Option<proto::ViewId>,
     status_bar: Entity<StatusBar>,
+    editor_pane_status: Entity<editor_pane_status::EditorPaneStatus>,
     modal_layer: Entity<ModalLayer>,
     toast_layer: Entity<ToastLayer>,
     titlebar_item: Option<AnyView>,
@@ -1493,6 +1495,7 @@ impl Workspace {
             status_bar.add_right_item(bottom_dock_buttons, window, cx);
             status_bar
         });
+        let editor_pane_status = cx.new(|_cx| editor_pane_status::EditorPaneStatus::new());
 
         let session_id = app_state.session.read(cx).id().to_owned();
 
@@ -1591,6 +1594,7 @@ impl Workspace {
             last_active_center_pane: Some(center_pane.downgrade()),
             last_active_view_id: None,
             status_bar,
+            editor_pane_status,
             modal_layer,
             toast_layer,
             titlebar_item: None,
@@ -1928,6 +1932,10 @@ impl Workspace {
 
     pub fn status_bar(&self) -> &Entity<StatusBar> {
         &self.status_bar
+    }
+
+    pub fn editor_pane_status(&self) -> &Entity<editor_pane_status::EditorPaneStatus> {
+        &self.editor_pane_status
     }
 
     pub fn status_bar_visible(&self, cx: &App) -> bool {
@@ -7352,6 +7360,7 @@ impl Render for Workspace {
                                                                             app_state: &self.app_state,
                                                                             project: &self.project,
                                                                             workspace: &self.weak_self,
+                                                                            editor_pane_status: Some(self.editor_pane_status.clone().into()),
                                                                         },
                                                                         window,
                                                                         cx,
@@ -7434,6 +7443,7 @@ impl Render for Workspace {
                                                                                     app_state: &self.app_state,
                                                                                     project: &self.project,
                                                                                     workspace: &self.weak_self,
+                                                                                    editor_pane_status: Some(self.editor_pane_status.clone().into()),
                                                                                 },
                                                                                 window,
                                                                                 cx,
@@ -7512,6 +7522,7 @@ impl Render for Workspace {
                                                                                     app_state: &self.app_state,
                                                                                     project: &self.project,
                                                                                     workspace: &self.weak_self,
+                                                                                    editor_pane_status: Some(self.editor_pane_status.clone().into()),
                                                                                 },
                                                                                 window,
                                                                                 cx,
@@ -7576,6 +7587,7 @@ impl Render for Workspace {
                                                                     app_state: &self.app_state,
                                                                     project: &self.project,
                                                                     workspace: &self.weak_self,
+                                                                    editor_pane_status: Some(self.editor_pane_status.clone().into()),
                                                                 },
                                                                 window,
                                                                 cx,
