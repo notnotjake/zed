@@ -449,8 +449,8 @@ pub fn initialize_workspace(
         let line_ending_indicator =
             cx.new(|_| line_ending_selector::LineEndingIndicator::default());
         workspace.status_bar().update(cx, |status_bar, cx| {
-            status_bar.add_left_item(search_button, window, cx);
-            status_bar.add_left_item(lsp_button, window, cx);
+            status_bar.add_left_item(search_button.clone(), window, cx);
+            status_bar.add_left_item(lsp_button.clone(), window, cx);
             status_bar.add_left_item(diagnostic_summary, window, cx);
             status_bar.add_left_item(activity_indicator.clone(), window, cx);
             status_bar.add_right_item(edit_prediction_ui, window, cx);
@@ -471,6 +471,12 @@ pub fn initialize_workspace(
                 title_bar.set_activity_indicator(activity_indicator.into(), cx);
             });
         }
+
+        // [zed-fork] Mirror search and LSP buttons to title bar
+        workspace.title_bar_items().update(cx, |title_bar_items, cx| {
+            title_bar_items.add_item(search_button.into(), cx);
+            title_bar_items.add_item(lsp_button.into(), cx);
+        });
 
         let handle = cx.entity().downgrade();
         window.on_window_should_close(cx, move |window, cx| {

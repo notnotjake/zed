@@ -221,7 +221,9 @@ impl Render for TitleBar {
                 })
                 .gap_1()
                 .on_mouse_down(MouseButton::Left, |_, _, cx| cx.stop_propagation())
-                .child(self.render_dock_buttons(cx))
+                // [zed-fork] Status items mirrored from status bar
+                .children(self.render_title_bar_items(cx))
+                .children(self.render_panel_buttons(cx))
                 .children(self.render_call_controls(window, cx))
                 .children(self.render_connection_status(status, cx))
                 .when(
@@ -897,6 +899,30 @@ impl TitleBar {
         active_call
             .update(cx, |call, cx| call.unshare_project(project, cx))
             .log_err();
+    }
+
+    /// Renders panel toggle buttons mirrored from the status bar.
+    /// These are the same entities used in the status bar, ensuring they stay in sync.
+    fn render_panel_buttons(&self, cx: &App) -> Option<AnyElement> {
+        let workspace = self.workspace.upgrade()?;
+        let workspace = workspace.read(cx);
+        let (left, bottom, right) = workspace.panel_buttons();
+
+        Some(
+            h_flex()
+                .gap_1()
+                .child(left.clone())
+                .child(right.clone())
+                .child(bottom.clone())
+                .into_any_element(),
+        )
+    }
+
+    /// Renders status items mirrored from the status bar (search button, LSP button, etc.).
+    fn render_title_bar_items(&self, cx: &App) -> Option<AnyElement> {
+        let workspace = self.workspace.upgrade()?;
+        let title_bar_items = workspace.read(cx).title_bar_items().clone();
+        Some(title_bar_items.into_any_element())
     }
 
     fn render_connection_status(
